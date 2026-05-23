@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-base {
+    @apply px-4 py-2 text-gray-200 transition-all duration-300 relative overflow-hidden;
+    @apply hover:bg-white/5 hover:backdrop-blur-md hover:text-white;
+    font-weight: 400;
+  }
+  .btn-base::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-px bg-white transition-all duration-500;
+  }
+  .btn-base:hover::after {
+    @apply w-full;
+  }
+
+  .card-base {
+    @apply bg-dark/60 backdrop-blur-md border border-gray-700/50 rounded-lg;
+    @apply transition-all duration-300 hover:border-gray-600/80;
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #525252 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #525252;
+  border-radius: 3px;
+}
+
+.leaflet-container {
+  background-color: #0a0a0a !important;
+}

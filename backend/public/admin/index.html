@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>后台管理</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #0a0a0a; color: #e5e5e5;
+    min-height: 100vh; font-weight: 300;
+  }
+  input, textarea, select, button { font-family: inherit; font-weight: 300; }
+  a { color: inherit; text-decoration: none; }
+
+  .login-page {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  .login-card {
+    background: rgba(18,18,18,0.6); backdrop-filter: blur(12px);
+    border: 1px solid rgba(64,64,64,0.5); border-radius: 8px;
+    padding: 32px; width: 100%; max-width: 360px;
+  }
+  .login-card h1 { font-size: 20px; font-weight: 400; color: #fff; margin-bottom: 24px; text-align: center; }
+  .login-card input {
+    width: 100%; background: transparent; border: none; border-bottom: 1px solid #404040;
+    padding: 10px 0; color: #e5e5e5; font-size: 14px; outline: none;
+    transition: border-color 0.3s;
+  }
+  .login-card input:focus { border-color: #a3a3a3; }
+  .login-card button {
+    width: 100%; margin-top: 20px; padding: 10px;
+    background: transparent; border: none; color: #e5e5e5; font-size: 14px;
+    cursor: pointer; position: relative; overflow: hidden; border-radius: 8px;
+    transition: all 0.3s;
+  }
+  .login-card button:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .login-card .test-btn { margin-top: 12px; font-size: 12px; color: #737373; }
+  .login-card .test-btn:hover { color: #a3a3a3; }
+  .login-err { color: #ef4444; font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+
+  .dashboard { display: none; max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap; margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid rgba(64,64,64,0.5);
+  }
+  .header h1 { font-size: 20px; font-weight: 400; color: #fff; white-space: nowrap; }
+  .header .search-box {
+    flex: 1; min-width: 200px; max-width: 320px;
+    background: transparent; border: none; border-bottom: 1px solid #404040;
+    padding: 8px 0; color: #e5e5e5; font-size: 14px; outline: none;
+    transition: border-color 0.3s;
+  }
+  .header .search-box:focus { border-color: #a3a3a3; }
+  .header .logout-btn { font-size: 13px; color: #737373; cursor: pointer; background: none; border: none; }
+  .header .logout-btn:hover { color: #a3a3a3; }
+
+  .section-title {
+    font-size: 15px; font-weight: 400; color: #a3a3a3; margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .upload-form {
+    background: rgba(18,18,18,0.6); backdrop-filter: blur(12px);
+    border: 1px solid rgba(64,64,64,0.5); border-radius: 8px;
+    padding: 20px; margin-bottom: 24px;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .form-grid input, .form-grid textarea, .form-grid select {
+    background: transparent; border: none; border-bottom: 1px solid #404040;
+    padding: 8px 0; color: #e5e5e5; font-size: 13px; outline: none;
+    transition: border-color 0.3s; width: 100%;
+  }
+  .form-grid input:focus, .form-grid textarea:focus { border-color: #a3a3a3; }
+  .form-grid textarea { resize: vertical; min-height: 60px; }
+  .form-grid .full-width { grid-column: 1 / -1; }
+  .latlng-row { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: end; }
+  .latlng-row input { width: 100% !important; }
+  .latlng-row select { width: auto !important; flex-shrink: 0; }
+  .form-grid label { font-size: 11px; color: #737373; display: flex; align-items: center; gap: 6px; }
+  .form-grid label input[type=checkbox] { width: auto; accent-color: #737373; }
+
+  .btn {
+    padding: 8px 16px; font-size: 13px; border: none; background: transparent;
+    color: #e5e5e5; cursor: pointer; border-radius: 8px; transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .btn.danger:hover { color: #ef4444; }
+  .btn.primary { color: #fff; }
+
+  .file-upload-label {
+    display: inline-flex; align-items: center; padding: 8px 16px; font-size: 13px;
+    border: 1px dashed #404040; border-radius: 8px; color: #a3a3a3;
+    cursor: pointer; transition: all 0.3s;
+  }
+  .file-upload-label:hover { border-color: #a3a3a3; color: #e5e5e5; }
+  .file-upload-label input[type=file] { display: none; }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px; padding: 12px 0;
+  }
+  .toolbar label { font-size: 13px; color: #737373; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .toolbar label input { accent-color: #737373; }
+
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .photo-card {
+    background: rgba(18,18,18,0.6); border: 1px solid rgba(64,64,64,0.5);
+    border-radius: 8px; overflow: hidden; position: relative; transition: border-color 0.3s;
+  }
+  .photo-card:hover { border-color: rgba(82,82,82,0.8); }
+  .photo-card img {
+    width: 100%; aspect-ratio: 3/2; object-fit: cover; display: block; background: #171717;
+  }
+  .photo-card .card-info { padding: 10px 12px; }
+  .photo-card .card-info h3 { font-size: 13px; font-weight: 400; color: #e5e5e5; }
+  .photo-card .card-info p { font-size: 11px; color: #737373; margin-top: 2px; }
+  .photo-card .card-info .featured-tag {
+    display: inline-block; font-size: 10px; padding: 1px 6px;
+    border: 1px solid rgba(64,64,64,0.5); border-radius: 4px; color: #a3a3a3; margin-top: 4px;
+  }
+  .photo-card .card-check {
+    position: absolute; top: 8px; left: 8px; accent-color: #a3a3a3;
+    width: 16px; height: 16px; cursor: pointer;
+  }
+  .photo-card .card-delete {
+    position: absolute; top: 6px; right: 8px;
+    background: rgba(10,10,10,0.8); border: none; color: #737373;
+    font-size: 16px; cursor: pointer; width: 24px; height: 24px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .photo-card .card-delete:hover { color: #ef4444; }
+
+  .pagination {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    margin-top: 24px; padding: 16px 0;
+  }
+  .pagination button {
+    min-width: 36px; height: 36px; border: 1px solid rgba(64,64,64,0.5);
+    background: transparent; color: #a3a3a3; font-size: 13px;
+    border-radius: 6px; cursor: pointer; transition: all 0.3s;
+  }
+  .pagination button:hover { border-color: #a3a3a3; color: #e5e5e5; }
+  .pagination button.active { background: rgba(255,255,255,0.05); color: #fff; border-color: #737373; }
+  .pagination button:disabled { opacity: 0.3; cursor: default; }
+  .pagination .page-info { font-size: 12px; color: #737373; margin: 0 12px; }
+
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 999;
+    padding: 10px 20px; border-radius: 8px; font-size: 13px;
+    backdrop-filter: blur(12px); border: 1px solid; display: none;
+  }
+  .toast.success { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: #22c55e; }
+  .toast.error { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #ef4444; }
+
+  @media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .photo-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .header { flex-direction: column; align-items: stretch; }
+    .header .search-box { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <h1>后台管理</h1>
+    <input type="password" id="passwordInput" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')login()" />
+    <button onclick="login()">登 录</button>
+    <button class="test-btn" onclick="testR2Btn()">测试 R2 连接</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <div class="header">
+    <h1>后台管理</h1>
+    <input type="text" class="search-box" id="searchInput" placeholder="搜索标题、城市、国家..." />
+    <button class="logout-btn" onclick="logout()">退出</button>
+  </div>
+
+  <div class="section-title">上传照片</div>
+  <div class="upload-form">
+    <div class="form-grid">
+      <label class="file-upload-label">
+        <input type="file" id="fileInput" accept="image/*" onchange="fileChanged()" /> <span id="fileLabel">选择图片文件</span>
+      </label>
+      <input type="text" id="fTitle" placeholder="标题 *" />
+      <input type="text" id="fCity" placeholder="城市 *" />
+      <input type="text" id="fCountry" placeholder="国家 *" />
+      <div class="latlng-row">
+        <input type="text" id="fLat" placeholder="纬度 (如 39.9)" inputmode="decimal" />
+        <select id="fLatDir">
+          <option value="N">北纬 N</option>
+          <option value="S">南纬 S</option>
+        </select>
+      </div>
+      <div class="latlng-row">
+        <input type="text" id="fLng" placeholder="经度 (如 116.4)" inputmode="decimal" />
+        <select id="fLngDir">
+          <option value="E">东经 E</option>
+          <option value="W">西经 W</option>
+        </select>
+      </div>
+      <input type="date" id="fDate" placeholder="拍摄日期" />
+      <input type="text" id="fCamera" placeholder="相机型号" />
+      <input type="text" id="fLens" placeholder="镜头" />
+      <input type="text" id="fAperture" placeholder="光圈 (例: f/2.8)" />
+      <input type="text" id="fShutter" placeholder="快门 (例: 1/250s)" />
+      <input type="number" id="fIso" placeholder="ISO" />
+      <textarea id="fDesc" placeholder="描述" class="full-width"></textarea>
+      <label><input type="checkbox" id="fFeatured" /> 设为精选</label>
+      <button class="btn primary" onclick="uploadPhoto()" style="justify-self:end">上传</button>
+    </div>
+  </div>
+
+  <div class="section-title">照片列表</div>
+  <div class="toolbar">
+    <label><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /> 全选</label>
+    <button class="btn danger" onclick="batchAction('delete')">批量删除</button>
+    <button class="btn" onclick="batchAction('setFeatured')">批量设精选</button>
+    <button class="btn" onclick="batchAction('unsetFeatured')">批量取消精选</button>
+    <span style="flex:1"></span>
+    <span id="totalInfo" style="font-size:12px;color:#737373"></span>
+  </div>
+  <div class="photo-grid" id="photoGrid"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let token = (function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  if (urlToken) {
+    localStorage.setItem('admin_token', urlToken);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return urlToken;
+  }
+  return localStorage.getItem('admin_token');
+})();
+let currentPage = 1;
+let lastCheckedIndex = -1;
+let searchTimer = null;
+
+// ── Auth ──────────────────────────────────────────
+function login() {
+  const pw = document.getElementById('passwordInput').value;
+  if (!pw) return;
+  fetch(API + '/api/admin/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw }),
+  })
+    .then(r => r.json())
+    .then(d => {
+      if (d.token) {
+        token = d.token;
+        localStorage.setItem('admin_token', token);
+        showDashboard();
+      } else {
+        document.getElementById('loginErr').textContent = d.error || '登录失败';
+        document.getElementById('loginErr').style.display = 'block';
+      }
+    });
+}
+
+function logout() {
+  localStorage.removeItem('admin_token');
+  token = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'LOGOUT' }, window.location.origin);
+  }
+}
+
+function testR2Btn() {
+  const pw = document.getElementById('passwordInput').value;
+  const t = token || (pw ? null : null);
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  fetch(API + '/api/admin/test-r2', { headers })
+    .then(r => r.json())
+    .then(d => {
+      const color = d.success ? '#22c55e' : '#ef4444';
+      showToast(d.success ? '√ ' + d.message : '× ' + d.message, d.success ? 'success' : 'error');
+    })
+    .catch(e => showToast('请求失败: ' + e.message, 'error'));
+}
+
+// ── Toast ─────────────────────────────────────────
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast ' + type; el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// ── Upload ────────────────────────────────────────
+function fileChanged() {
+  const f = document.getElementById('fileInput').files[0];
+  document.getElementById('fileLabel').textContent = f ? f.name : '选择图片文件';
+}
+
+function uploadPhoto() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return showToast('请选择图片文件', 'error');
+
+  const form = new FormData();
+  form.append('file', file);
+  const latVal = parseFloat(document.getElementById('fLat').value) || 0;
+  const latSign = document.getElementById('fLatDir').value === 'S' ? -1 : 1;
+  const lngVal = parseFloat(document.getElementById('fLng').value) || 0;
+  const lngSign = document.getElementById('fLngDir').value === 'W' ? -1 : 1;
+
+  form.append('latitude', latVal * latSign);
+  form.append('longitude', lngVal * lngSign);
+
+  const fields = [
+    ['title', 'fTitle'], ['city', 'fCity'], ['country', 'fCountry'],
+    ['takenAt', 'fDate'], ['camera', 'fCamera'], ['lens', 'fLens'],
+    ['aperture', 'fAperture'], ['shutter', 'fShutter'], ['iso', 'fIso'],
+    ['description', 'fDesc'], ['featured', 'fFeatured'],
+  ];
+  fields.forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el.type === 'checkbox') form.append(key, el.checked ? '1' : '0');
+    else form.append(key, el.value);
+  });
+
+  fetch(API + '/api/admin/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token },
+    body: form,
+  })
+    .then(r => r.json())
+    .then(d => {
+      if (d.success) {
+        showToast('上传成功', 'success');
+        fields.forEach(([, id]) => {
+          const el = document.getElementById(id);
+          if (el.type === 'checkbox') el.checked = false;
+          else el.value = '';
+        });
+        document.getElementById('fLat').value = '';
+        document.getElementById('fLng').value = '';
+        document.getElementById('fLatDir').value = 'N';
+        document.getElementById('fLngDir').value = 'E';
+        document.getElementById('fileInput').value = '';
+        document.getElementById('fileLabel').textContent = '选择图片文件';
+        loadPhotos();
+      } else {
+        showToast(d.error || '上传失败', 'error');
+      }
+    })
+    .catch(() => showToast('上传失败', 'error'));
+}
+
+// ── Photos List ───────────────────────────────────
+function loadPhotos(page, search) {
+  page = page || currentPage;
+  search = search !== undefined ? search : (document.getElementById('searchInput').value || '');
+  const params = new URLSearchParams({ page, limit: 20 });
+  if (search) params.set('search', search);
+
+  fetch(API + '/api/admin/photos?' + params, {
+    headers: { 'Authorization': 'Bearer ' + token },
+  })
+    .then(r => { if (r.status === 401) { logout(); throw new Error('unauth'); } return r.json(); })
+    .then(d => {
+      renderPhotos(d.photos);
+      renderPagination(d.total, d.page, d.totalPages);
+      document.getElementById('totalInfo').textContent =
+        '第' + d.page + '页，共' + d.totalPages + '页，共' + d.total + '张照片';
+      currentPage = d.page;
+      document.getElementById('selectAll').checked = false;
+    })
+    .catch(e => { if (e.message !== 'unauth') showToast('加载失败', 'error'); });
+}
+
+function renderPhotos(photos) {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = photos.map((p, i) => `
+    <div class="photo-card">
+      <input type="checkbox" class="card-check" data-id="${p.id}" data-index="${i}" onchange="onCheckChange()" />
+      <button class="card-delete" onclick="deletePhoto(${p.id})" title="删除">&times;</button>
+      <img src="${p.thumbnailUrl || p.url}" alt="${p.title}" loading="lazy" />
+      <div class="card-info">
+        <h3>${esc(p.title)}</h3>
+        <p>${esc(p.city)}, ${esc(p.country)} &middot; ${esc(p.takenAt)}</p>
+        ${p.featured ? '<span class="featured-tag">精选</span>' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // Shift-click multi-select
+  grid.querySelectorAll('.card-check').forEach(cb => {
+    cb.addEventListener('click', function(e) {
+      const idx = parseInt(this.dataset.index);
+      if (e.shiftKey && lastCheckedIndex >= 0) {
+        const [lo, hi] = [Math.min(lastCheckedIndex, idx), Math.max(lastCheckedIndex, idx)];
+        grid.querySelectorAll('.card-check').forEach(c => {
+          const i = parseInt(c.dataset.index);
+          if (i >= lo && i <= hi) c.checked = this.checked;
+        });
+      }
+      lastCheckedIndex = idx;
+    });
+  });
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function getSelectedIds() {
+  return Array.from(document.querySelectorAll('.card-check:checked')).map(c => c.dataset.id);
+}
+
+function toggleSelectAll() {
+  const checked = document.getElementById('selectAll').checked;
+  document.querySelectorAll('.card-check').forEach(c => { c.checked = checked; });
+}
+
+function onCheckChange() {
+  const all = document.querySelectorAll('.card-check');
+  const checked = document.querySelectorAll('.card-check:checked');
+  document.getElementById('selectAll').checked = checked.length === all.length && all.length > 0;
+}
+
+function deletePhoto(id) {
+  if (!confirm('确认删除照片 #' + id + '？')) return;
+  fetch(API + '/api/admin/photos/' + id, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + token },
+  })
+    .then(r => { if (r.status === 401) { logout(); return {}; } return r.json(); })
+    .then(d => {
+      if (d.success) { showToast('删除成功', 'success'); loadPhotos(); }
+      else showToast(d.error || '删除失败', 'error');
+    });
+}
+
+function batchAction(action) {
+  const ids = getSelectedIds().map(Number);
+  if (!ids.length) return showToast('请先选择照片', 'error');
+  const labels = { delete: '删除', setFeatured: '设为精选', unsetFeatured: '取消精选' };
+  if (!confirm('确认' + labels[action] + ' ' + ids.length + ' 张照片？')) return;
+
+  fetch(API + '/api/admin/batch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ action, ids }),
+  })
+    .then(r => { if (r.status === 401) { logout(); return {}; } return r.json(); })
+    .then(d => {
+      if (d.success) { showToast('操作成功', 'success'); loadPhotos(); }
+      else showToast(d.error || '操作失败', 'error');
+    });
+}
+
+function renderPagination(total, page, totalPages) {
+  const pg = document.getElementById('pagination');
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let btns = '';
+  btns += `<button ${page <= 1 ? 'disabled' : ''} data-p="${page - 1}">&laquo;</button>`;
+
+  const start = Math.max(1, page - 2);
+  const end = Math.min(totalPages, page + 2);
+  for (let i = start; i <= end; i++) {
+    btns += `<button class="${i === page ? 'active' : ''}" data-p="${i}">${i}</button>`;
+  }
+
+  btns += `<button ${page >= totalPages ? 'disabled' : ''} data-p="${page + 1}">&raquo;</button>`;
+  pg.innerHTML = btns;
+
+  pg.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', function() {
+      const p = parseInt(this.dataset.p);
+      if (p && p !== currentPage) { loadPhotos(p); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    });
+  });
+}
+
+// ── Search ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { loadPhotos(1, this.value); }, 300);
+  });
+});
+
+// ── Init ──────────────────────────────────────────
+function showDashboard() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  loadPhotos();
+}
+
+if (token) showDashboard();
+</script>
+</body>
+</html>
